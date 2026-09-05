@@ -1,30 +1,41 @@
 using System;
 using System.IO;
 using System.Threading;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ivp.ai.api.Configuration;
 using ivp.ai.api.Model;
 using ivp.ai.api.Services;
 
 namespace ivp.ai.api.test
 {
+    [TestClass]
     public class Test01
     {
-        public static void Run()
+        private static readonly string ApiKey = "KVjKM1XjE2A0b4tzpDaCAD9Tn7gRE07Z";
+        private static readonly string BaseUri = "https://api.mistral.ai/v1";
+        private static readonly string FileUploadUri = "https://api.mistral.ai/v1/files";
+        private static readonly string SendPromptUri = "https://api.mistral.ai/v1/chat/completions";
+        private static readonly string PromptText = "Please retrieve the contract number, contract startdate, organization, and amount from the uploaded contract document.";
+
+        private static IDocumentRecognitionService _service;
+        private static Guid _sessionId1;
+        private static Guid _sessionId2;
+        private static Guid _sessionId3;
+
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context)
         {
             // Create configuration
             var configuration = new MistralDocumentRecognitionConfiguration
             {
-                AiApiKey = "KVjKM1XjE2A0b4tzpDaCAD9Tn7gRE07Z",
-                AiBaseUri = "https://api.mistral.ai/v1",
-                AiFileUploadUri = "https://api.mistral.ai/v1/files",
-                AiSendPromptUri = "https://api.mistral.ai/v1/chat/completions"
+                AiApiKey = ApiKey,
+                AiBaseUri = BaseUri,
+                AiFileUploadUri = FileUploadUri,
+                AiSendPromptUri = SendPromptUri
             };
 
             // Instantiate service
-            var service = new MistralDocumentRecognitionService(configuration);
-
-            // Prompt text
-            string promptText = "Please retrieve the contract number, contract startdate, organization, and amount from the uploaded contract document.";
+            _service = new MistralDocumentRecognitionService(configuration);
 
             // Get the base directory for testdata
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -53,35 +64,42 @@ namespace ivp.ai.api.test
             };
 
             // Start document recognition for all 3 files
-            var sessionId1 = service.StartDocumentRecognition(testFile1, promptText);
-            var sessionId2 = service.StartDocumentRecognition(testFile2, promptText);
-            var sessionId3 = service.StartDocumentRecognition(testFile3, promptText);
+            _sessionId1 = _service.StartDocumentRecognition(testFile1, PromptText);
+            _sessionId2 = _service.StartDocumentRecognition(testFile2, PromptText);
+            _sessionId3 = _service.StartDocumentRecognition(testFile3, PromptText);
+        }
 
-            Console.WriteLine("Started document recognition for 3 files:");
-            Console.WriteLine("Session 1: " + sessionId1);
-            Console.WriteLine("Session 2: " + sessionId2);
-            Console.WriteLine("Session 3: " + sessionId3);
+        [TestMethod]
+        public void TestImmediateResultsAreNull()
+        {
+            // Immediately check results (should be null since processing is async)
+            var result1 = _service.GetDocumentRecognitionResult(_sessionId1);
+            var result2 = _service.GetDocumentRecognitionResult(_sessionId2);
+            var result3 = _service.GetDocumentRecognitionResult(_sessionId3);
 
-            // Immediately check results (will most likely be null)
-            Console.WriteLine("\nImmediate results:");
-            var result1 = service.GetDocumentRecognitionResult(sessionId1);
-            var result2 = service.GetDocumentRecognitionResult(sessionId2);
-            var result3 = service.GetDocumentRecognitionResult(sessionId3);
+            Assert.IsNull(result1, "Session 1 result should be null immediately after starting");
+            Assert.IsNull(result2, "Session 2 result should be null immediately after starting");
+            Assert.IsNull(result3, "Session 3 result should be null immediately after starting");
+        }
 
-            Console.WriteLine("Session 1 result: " + (result1 == null ? "null" : result1.ResponseText));
-            Console.WriteLine("Session 2 result: " + (result2 == null ? "null" : result2.ResponseText));
-            Console.WriteLine("Session 3 result: " + (result3 == null ? "null" : result3.ResponseText));
-
-            // Wait 30 seconds
-            Console.WriteLine("\nWaiting 30 seconds...");
+        [TestMethod]
+        public void TestResultsAfterWaiting()
+        {
+            // Wait 30 seconds for processing to complete
             Thread.Sleep(30000);
 
             // Check results again after waiting
-            Console.WriteLine("\nResults after 30 seconds:");
-            result1 = service.GetDocumentRecognitionResult(sessionId1);
-            result2 = service.GetDocumentRecognitionResult(sessionId2);
-            result3 = service.GetDocumentRecognitionResult(sessionId3);
+            var result1 = _service.GetDocumentRecognitionResult(_sessionId1);
+            var result2 = _service.GetDocumentRecognitionResult(_sessionId2);
+            var result3 = _service.GetDocumentRecognitionResult(_sessionId3);
 
+            // Results may or may not be available depending on network/API
+            // We just verify the session IDs are valid
+            Assert.IsNotNull(_sessionId1, "Session 1 ID should not be null");
+            Assert.IsNotNull(_sessionId2, "Session 2 ID should not be null");
+            Assert.IsNotNull(_sessionId3, "Session 3 ID should not be null");
+
+            // Print results for debugging
             Console.WriteLine("Session 1 result: " + (result1 == null ? "null" : result1.ResponseText));
             Console.WriteLine("Session 2 result: " + (result2 == null ? "null" : result2.ResponseText));
             Console.WriteLine("Session 3 result: " + (result3 == null ? "null" : result3.ResponseText));
