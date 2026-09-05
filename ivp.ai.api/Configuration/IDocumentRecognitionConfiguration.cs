@@ -8,3 +8,4 @@ namespace ivp.ai.api.Configuration
         string AiSendPromptUri { get; set; }
     }
 }
+
