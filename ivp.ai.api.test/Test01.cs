@@ -5,7 +5,7 @@ using ivp.ai.api.Configuration;
 using ivp.ai.api.Model;
 using ivp.ai.api.Services;
 
-namespace ivp.ai.api
+namespace ivp.ai.api.test
 {
     public class Test01
     {
@@ -26,26 +26,30 @@ namespace ivp.ai.api
             // Prompt text
             string promptText = "Please retrieve the contract number, contract startdate, organization, and amount from the uploaded contract document.";
 
+            // Get the base directory for testdata
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string testDataPath = Path.Combine(baseDir, "testdata");
+
             // Create test documents
             var testFile1 = new MistralRecognisableDocument
             {
-                FileUrl = Path.Combine("testdata", "testfile1.pdf"),
+                FileUrl = Path.Combine(testDataPath, "testfile1.pdf"),
                 FileMetadata = "Test File 1",
-                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine("testdata", "testfile1.pdf")))
+                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine(testDataPath, "testfile1.pdf")))
             };
 
             var testFile2 = new MistralRecognisableDocument
             {
-                FileUrl = Path.Combine("testdata", "testfile2.pdf"),
+                FileUrl = Path.Combine(testDataPath, "testfile2.pdf"),
                 FileMetadata = "Test File 2",
-                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine("testdata", "testfile2.pdf")))
+                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine(testDataPath, "testfile2.pdf")))
             };
 
             var testFile3 = new MistralRecognisableDocument
             {
-                FileUrl = Path.Combine("testdata", "testfile3.pdf"),
+                FileUrl = Path.Combine(testDataPath, "testfile3.pdf"),
                 FileMetadata = "Test File 3",
-                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine("testdata", "testfile3.pdf")))
+                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine(testDataPath, "testfile3.pdf")))
             };
 
             // Start document recognition for all 3 files
