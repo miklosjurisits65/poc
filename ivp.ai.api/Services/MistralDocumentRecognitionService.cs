@@ -143,12 +143,12 @@ namespace ivp.ai.api.Services
                 var requestBody = new
                 {
                     model = "mistral-large-latest",
-                    messages = new[]
+                    messages = new object[]
                     {
                         new
                         {
                             role = "user",
-                            content = new[]
+                            content = new object[]
                             {
                                 new { type = "text", text = promptText },
                                 new { type = "file", file_id = fileId }
