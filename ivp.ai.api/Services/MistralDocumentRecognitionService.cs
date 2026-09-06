@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text;
-using System.Web;
 using ivp.ai.api.Configuration;
 using ivp.ai.api.Model;
 using Newtonsoft.Json;
@@ -69,38 +68,43 @@ namespace ivp.ai.api.Services
         {
             try
             {
+                var boundary = "----WebKitFormBoundary" + Guid.NewGuid().ToString();
                 var request = WebRequest.Create(_configuration.AiFileUploadUri) as HttpWebRequest;
                 request.Method = "POST";
                 request.Headers.Add("Authorization", "Bearer " + _configuration.AiApiKey);
-                request.ContentType = "multipart/form-data";
-
-                var boundary = "------------------------" + DateTime.Now.Ticks.ToString("x");
                 request.ContentType = "multipart/form-data; boundary=" + boundary;
 
                 using (var requestStream = request.GetRequestStream())
-                using (var writer = new StreamWriter(requestStream))
                 {
-                    // Write file content
-                    writer.WriteLine("--" + boundary);
-                    writer.WriteLine("Content-Disposition: form-data; name=\"file\"; filename=\"" + Path.GetFileName(recognisableDocument.FileUrl) + "\"");
-                    writer.WriteLine("Content-Type: application/octet-stream");
-                    writer.WriteLine();
-                    writer.Flush();
-
+                    // Write file part
                     var fileBytes = Convert.FromBase64String(recognisableDocument.Base64Content);
-                    requestStream.Write(fileBytes, 0, fileBytes.Length);
-                    writer.WriteLine();
+                    string fileName = Path.GetFileName(recognisableDocument.FileUrl);
 
-                    // Write purpose
-                    writer.WriteLine("--" + boundary);
-                    writer.WriteLine("Content-Disposition: form-data; name=\"purpose\"");
-                    writer.WriteLine();
-                    writer.WriteLine("ocr");
-                    writer.WriteLine();
+                    var fileHeader = string.Format(
+                        "--{0}\r\n" +
+                        "Content-Disposition: form-data; name=\"file\"; filename=\"{1}\"\r\n" +
+                        "Content-Type: application/pdf\r\n\r\n",
+                        boundary, fileName);
+
+                    var fileHeaderBytes = Encoding.UTF8.GetBytes(fileHeader);
+                    requestStream.Write(fileHeaderBytes, 0, fileHeaderBytes.Length);
+                    requestStream.Write(fileBytes, 0, fileBytes.Length);
+                    requestStream.Write(Encoding.UTF8.GetBytes("\r\n"), 0, 2);
+
+                    // Write purpose part
+                    var purposeHeader = string.Format(
+                        "--{0}\r\n" +
+                        "Content-Disposition: form-data; name=\"purpose\"\r\n\r\n" +
+                        "ocr\r\n",
+                        boundary);
+
+                    var purposeHeaderBytes = Encoding.UTF8.GetBytes(purposeHeader);
+                    requestStream.Write(purposeHeaderBytes, 0, purposeHeaderBytes.Length);
 
                     // End boundary
-                    writer.WriteLine("--" + boundary + "--");
-                    writer.Flush();
+                    var footer = string.Format("--{0}--\r\n", boundary);
+                    var footerBytes = Encoding.UTF8.GetBytes(footer);
+                    requestStream.Write(footerBytes, 0, footerBytes.Length);
                 }
 
                 using (var response = request.GetResponse() as HttpWebResponse)
@@ -118,6 +122,29 @@ namespace ivp.ai.api.Services
                         UsedTokens = 0 // Tokens not used in file upload
                     };
                 }
+            }
+            catch (WebException webEx)
+            {
+                string responseText = string.Empty;
+                if (webEx.Response != null)
+                {
+                    try
+                    {
+                        using (var stream = webEx.Response.GetResponseStream())
+                        using (var reader = new StreamReader(stream))
+                        {
+                            responseText = reader.ReadToEnd();
+                        }
+                    }
+                    catch { }
+                }
+                return new MistralDocumentRecognitionResult
+                {
+                    SessionId = Guid.NewGuid().ToString(),
+                    FileId = recognisableDocument.FileUrl,
+                    ResponseText = "File upload error: " + webEx.Message + " Response: " + responseText,
+                    UsedTokens = 0
+                };
             }
             catch (Exception ex)
             {
