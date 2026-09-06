@@ -18,6 +18,9 @@ namespace ivp.ai.api.test
         private static readonly string PromptText = "Please retrieve the contract number, contract startdate, organization, and amount from the uploaded contract document.";
 
         private static IDocumentRecognitionService _service;
+        private static MistralRecognisableDocument _testFile1;
+        private static MistralRecognisableDocument _testFile2;
+        private static MistralRecognisableDocument _testFile3;
         private static Guid _sessionId1;
         private static Guid _sessionId2;
         private static Guid _sessionId3;
@@ -42,32 +45,42 @@ namespace ivp.ai.api.test
             string testDataPath = Path.Combine(baseDir, "testdata");
 
             // Create test documents
-            var testFile1 = new MistralRecognisableDocument
+            _testFile1 = new MistralRecognisableDocument
             {
-                FileUrl = Path.Combine(testDataPath, "testfile1.pdf"),
-                FileMetadata = "Test File 1",
-                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine(testDataPath, "testfile1.pdf")))
+                FileUrl = Path.Combine(testDataPath, "Polizze R753221425 2025.06.23.pdf"),
+                FileMetadata = "Polizze R753221425 2025.06.23.pdf",
+                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine(testDataPath, "Polizze R753221425 2025.06.23.pdf")))
             };
 
-            var testFile2 = new MistralRecognisableDocument
+            _testFile2 = new MistralRecognisableDocument
             {
-                FileUrl = Path.Combine(testDataPath, "testfile2.pdf"),
-                FileMetadata = "Test File 2",
-                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine(testDataPath, "testfile2.pdf")))
+                FileUrl = Path.Combine(testDataPath, "POLSET_L958179562_2025-06-23.pdf"),
+                FileMetadata = "POLSET_L958179562_2025-06-23.pdf",
+                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine(testDataPath, "POLSET_L958179562_2025-06-23.pdf")))
             };
 
-            var testFile3 = new MistralRecognisableDocument
+            _testFile3 = new MistralRecognisableDocument
             {
-                FileUrl = Path.Combine(testDataPath, "testfile3.pdf"),
-                FileMetadata = "Test File 3",
-                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine(testDataPath, "testfile3.pdf")))
+                FileUrl = Path.Combine(testDataPath, "VL0200P2_PO92046774000_MAIL020P_20250626_194304_MAIL020P_14337959_SYS012_1080272_214_001.pdf"),
+                FileMetadata = "VL0200P2_PO92046774000_MAIL020P_20250626_194304_MAIL020P_14337959_SYS012_1080272_214_001.pdf",
+                Base64Content = Convert.ToBase64String(File.ReadAllBytes(Path.Combine(testDataPath, "VL0200P2_PO92046774000_MAIL020P_20250626_194304_MAIL020P_14337959_SYS012_1080272_214_001.pdf")))
             };
 
-            // Start document recognition for all 3 files
-            _sessionId1 = _service.StartDocumentRecognition(testFile1, PromptText);
-            _sessionId2 = _service.StartDocumentRecognition(testFile2, PromptText);
-            _sessionId3 = _service.StartDocumentRecognition(testFile3, PromptText);
         }
+
+        [TestMethod]
+        public void TestStartDocumentRecognition()
+        {
+            // Start document recognition for all 3 files
+            _sessionId1 = _service.StartDocumentRecognition(_testFile1, PromptText);
+            _sessionId2 = _service.StartDocumentRecognition(_testFile2, PromptText);
+            _sessionId3 = _service.StartDocumentRecognition(_testFile3, PromptText);
+
+            Assert.IsNotNull(_sessionId1, "Session Id 1 should not be null");
+            Assert.IsNotNull(_sessionId2, "Session Id 2 should not be null");
+            Assert.IsNotNull(_sessionId3, "Session Id 3 should not be null");
+        }
+
 
         [TestMethod]
         public void TestImmediateResultsAreNull()
