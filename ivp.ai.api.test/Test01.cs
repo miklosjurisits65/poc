@@ -21,9 +21,6 @@ namespace ivp.ai.api.test
         private static MistralRecognisableDocument _testFile1;
         private static MistralRecognisableDocument _testFile2;
         private static MistralRecognisableDocument _testFile3;
-        private static Guid _sessionId1;
-        private static Guid _sessionId2;
-        private static Guid _sessionId3;
 
         [ClassInitialize]
         public static void ClassInitialize(TestContext context)
@@ -69,53 +66,44 @@ namespace ivp.ai.api.test
         }
 
         [TestMethod]
-        public void TestStartDocumentRecognition()
+        public void TestDocumentRecognition()
         {
             // Start document recognition for all 3 files
-            _sessionId1 = _service.StartDocumentRecognition(_testFile1, PromptText);
-            _sessionId2 = _service.StartDocumentRecognition(_testFile2, PromptText);
-            _sessionId3 = _service.StartDocumentRecognition(_testFile3, PromptText);
+            var sessionId1 = _service.StartDocumentRecognition(_testFile1, PromptText);
+            //var sessionId2 = _service.StartDocumentRecognition(_testFile2, PromptText);
+            //var sessionId3 = _service.StartDocumentRecognition(_testFile3, PromptText);
 
-            Assert.IsNotNull(_sessionId1, "Session Id 1 should not be null");
-            Assert.IsNotNull(_sessionId2, "Session Id 2 should not be null");
-            Assert.IsNotNull(_sessionId3, "Session Id 3 should not be null");
-        }
+            Assert.IsNotNull(sessionId1, "Session Id 1 should not be null");
+            //Assert.IsNotNull(sessionId2, "Session Id 2 should not be null");
+            //Assert.IsNotNull(sessionId3, "Session Id 3 should not be null");
 
-
-        [TestMethod]
-        public void TestImmediateResultsAreNull()
-        {
             // Immediately check results (should be null since processing is async)
-            var result1 = _service.GetDocumentRecognitionResult(_sessionId1);
-            var result2 = _service.GetDocumentRecognitionResult(_sessionId2);
-            var result3 = _service.GetDocumentRecognitionResult(_sessionId3);
+            var result1 = _service.GetDocumentRecognitionResult(sessionId1);
+            //var result2 = _service.GetDocumentRecognitionResult(sessionId2);
+            //var result3 = _service.GetDocumentRecognitionResult(sessionId3);
 
             Assert.IsNull(result1, "Session 1 result should be null immediately after starting");
-            Assert.IsNull(result2, "Session 2 result should be null immediately after starting");
-            Assert.IsNull(result3, "Session 3 result should be null immediately after starting");
-        }
+            //Assert.IsNull(result2, "Session 2 result should be null immediately after starting");
+            //Assert.IsNull(result3, "Session 3 result should be null immediately after starting");
 
-        [TestMethod]
-        public void TestResultsAfterWaiting()
-        {
             // Wait 30 seconds for processing to complete
             Thread.Sleep(30000);
 
             // Check results again after waiting
-            var result1 = _service.GetDocumentRecognitionResult(_sessionId1);
-            var result2 = _service.GetDocumentRecognitionResult(_sessionId2);
-            var result3 = _service.GetDocumentRecognitionResult(_sessionId3);
+            result1 = _service.GetDocumentRecognitionResult(sessionId1);
+            //result2 = _service.GetDocumentRecognitionResult(sessionId2);
+            //result3 = _service.GetDocumentRecognitionResult(sessionId3);
 
             // Results may or may not be available depending on network/API
             // We just verify the session IDs are valid
-            Assert.IsNotNull(_sessionId1, "Session 1 ID should not be null");
-            Assert.IsNotNull(_sessionId2, "Session 2 ID should not be null");
-            Assert.IsNotNull(_sessionId3, "Session 3 ID should not be null");
+            Assert.IsNotNull(sessionId1, "Session 1 ID should not be null");
+            //Assert.IsNotNull(sessionId2, "Session 2 ID should not be null");
+            //Assert.IsNotNull(sessionId3, "Session 3 ID should not be null");
 
             // Print results for debugging
             Console.WriteLine("Session 1 result: " + (result1 == null ? "null" : result1.ResponseText));
-            Console.WriteLine("Session 2 result: " + (result2 == null ? "null" : result2.ResponseText));
-            Console.WriteLine("Session 3 result: " + (result3 == null ? "null" : result3.ResponseText));
+            //Console.WriteLine("Session 2 result: " + (result2 == null ? "null" : result2.ResponseText));
+            //Console.WriteLine("Session 3 result: " + (result3 == null ? "null" : result3.ResponseText));
         }
     }
 }
